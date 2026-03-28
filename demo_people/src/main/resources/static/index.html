@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciador de Pessoas</title>
+    <link rel="stylesheet" href="style.css"></head>
+<body>
+
+    <h1>Cadastro de Pessoas</h1>
+    
+    <div class="form-group">
+        <input type="text" id="name" placeholder="Nome">
+        <input type="number" id="age" placeholder="Idade">
+        <input type="email" id="email" placeholder="Email">
+        <button onclick="cadastrar()">Cadastrar</button>
+    </div>
+    <div  class="btn_list" >
+        <button onclick="listarTudo()">Atualizar Lista</button>
+    
+        <button onclick="DeletePeople()">Apagar</button>
+        <button onclick="EditPeople()">Editar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+            </tbody>
+    </table>
+
+    <script>
+        const URL = "http://localhost:8080/people";
+        
+
+        // Função para BUSCAR (GET)
+        function listarTudo() {
+            fetch(URL)
+                .then(res => res.json())
+                .then(dados => {
+                    let corpo = document.getElementById("tabela-corpo");
+                    corpo.innerHTML = ""; // Limpa a tabela antes de carregar
+                    dados.forEach(p => {
+                        corpo.innerHTML += `
+                            <tr>
+                                <td>${p.id}</td>
+                                <td>${p.name}</td>
+                                <td>${p.age}</td>
+                                <td>${p.email}</td>
+                            </tr>`;
+                    });
+                });
+        }
+
+        // Função para CADASTRAR (POST)
+        function cadastrar() {
+            const nome = document.getElementById("name").value;
+            const idade = document.getElementById("age").value;
+            const email = document.getElementById("email").value;
+
+            const objetoPessoa = { name: nome, age: idade, email: email };
+
+            fetch(URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(objetoPessoa)
+            })
+            .then(res => {
+                alert("Pessoa cadastrada!");
+                listarTudo(); // Atualiza a lista automaticamente
+            });
+        }
+
+        // DELETAR
+        function DeletePeople() {
+            const id = prompt("Digite o ID da pessoa que deseja deletar:");
+            
+            if (id) {
+                fetch(`${URL}/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(res => {
+                    alert("Pessoa removida com sucesso!");
+                    listarTudo(); // Atualiza a tabela
+                })
+                .catch(err => alert("Erro ao deletar: " + err));
+            }
+        }
+
+        // EDITAR
+        function EditPeople() {
+            const idDigitado = prompt("Digite o ID da pessoa que deseja atualizar:");
+            
+            // 1. Validação básica: se o usuário cancelou o prompt
+            if (!idDigitado) return;
+
+            // 2. Pegar os novos dados dos inputs
+            const nome = document.getElementById("name").value;
+            const idade = document.getElementById("age").value;
+            const email = document.getElementById("email").value;
+
+            // 3. Criar o objeto (As chaves devem ser iguais ao Java!)
+            const pessoaAtualizada = {
+                id: parseInt(idDigitado), // Adicione isso aqui
+                name: nome,
+                age: parseInt(idade),
+                email: email
+            };
+                
+
+            // 4. Fazer a chamada PUT
+            fetch(`${URL}/${idDigitado}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pessoaAtualizada)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Sucesso: Registro " + idDigitado + " atualizado!");
+                    listarTudo(); // Recarrega a tabela
+                } else {
+                    alert("Erro: Não foi possível atualizar. Verifique se o ID " + idDigitado + " existe.");
+                }
+            })
+            .catch(error => {
+                console.error("Erro na requisição:", error);
+                alert("Erro técnico na conexão.");
+            });
+        }  
+        // Carrega a lista assim que abrir a página
+        listarTudo();
+    </script>
+</body>
+</html>
